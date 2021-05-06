@@ -1,3 +1,62 @@
 ---
-# Main file (mandatory block) for fees application
+include:
+  - data-ministers.yml
+---
+objects:
+  - FeesMinisterList: DAList.using(there_are_any=True, auto_gather=False)
+objects from file:
+  - FeesMinisterList: data-ministers.yml
+---
+# welcome screen
+mandatory: True
+question: Welcome
+subquestion: |
+  This tool will help you to prepare instructions for Orders that amend fees.
+  
+  You **should** use this tool if:
+  
+  *  You are preparing instructions to change the amount of an existing fee (or fees); and
+  *  The fee can be amended by Order.
+  
+  You **should not** use this tool if:
+  
+  *  You are creating a new fee regime; or
+  *  The fee you wish to change cannot be amended by Order (because, for example, it needs to be done by Regulations or an amendment Law).
+  
+  Before starting, you will need to know:
+  
+  * The legislation that sets the fee you wish to amend;
+  * The legislation that allows the fee to be set or amended;
+  * The current amount of the fee;
+  * The new amount of the fee; and
+  * The reason for the change.
+  
+buttons:
+ - "Get started": continue
+ - "Exit": exit
+   url: https://www.gov.je/Government/NonexecLegal/StatesGreffe/Pages/LegislativeDraftingOffice.aspx
+---
+# initial details screen
+mandatory: True
+question: Contact details
+fields:
+  - Name (Instructing Officer): FeesIOName
+  - Email: FeesContactEmail
+  - Minister who will sign the Order: FeesSigningMinister
+    hint: select from the list
+    # choices: FeesMinisterList
+    # this can be a data file later
+    #   - Minister for X
+    #   - Minister for y
+    #   - Minister for z
+    #   - Minister for hippopotamuses
+    #   - Other
+    code: |
+      FeesMinisterList()
+  - Type who will sign: FeesMinister
+    show if:
+      variable: FeesSigningMinister
+      is: 'Other'
+  - Proposed commencement date: FeesCommencement
+
 ---
