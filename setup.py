@@ -45,7 +45,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 setup(name='docassemble.LDOJerseyFees',
       version='0.0.1',
       description=('An application for drafting fees'),
-      long_description='# docassemble.LDOJerseyFees\n\nAn application for drafting fees\n\n## Author\n\nKate Hannah, hann0263@flinders.edu.au\n\n',
+      long_description='# docassemble.LDOJerseyFees\r\n\r\nAn application for drafting fees\r\n\r\n## Author\r\n\r\nKate Hannah, hann0263@flinders.edu.au\r\n\r\n',
       long_description_content_type='text/markdown',
       author='Kate Hannah',
       author_email='hann0263@flinders.edu.au',

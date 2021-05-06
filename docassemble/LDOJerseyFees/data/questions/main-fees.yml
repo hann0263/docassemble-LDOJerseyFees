@@ -1,4 +1,12 @@
 ---
+include:
+  - data-ministers.yml
+---
+objects:
+  - FeesMinisterList: DAList.using(there_are_any=True, auto_gather=False)
+objects from file:
+  - FeesMinisterList: data-ministers.yml
+---
 # welcome screen
 mandatory: True
 question: Welcome
@@ -27,4 +35,28 @@ buttons:
  - "Get started": continue
  - "Exit": exit
    url: https://www.gov.je/Government/NonexecLegal/StatesGreffe/Pages/LegislativeDraftingOffice.aspx
+---
+# initial details screen
+mandatory: True
+question: Contact details
+fields:
+  - Name (Instructing Officer): FeesIOName
+  - Email: FeesContactEmail
+  - Minister who will sign the Order: FeesSigningMinister
+    hint: select from the list
+    # choices: FeesMinisterList
+    # this can be a data file later
+    #   - Minister for X
+    #   - Minister for y
+    #   - Minister for z
+    #   - Minister for hippopotamuses
+    #   - Other
+    code: |
+      FeesMinisterList()
+  - Type who will sign: FeesMinister
+    show if:
+      variable: FeesSigningMinister
+      is: 'Other'
+  - Proposed commencement date: FeesCommencement
+
 ---
