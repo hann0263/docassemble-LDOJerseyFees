@@ -1,4 +1,7 @@
 ---
+objects:
+  provision: DAList.using(object_type=Thing, there_are_any=True)
+---
 # welcome screen
 mandatory: True
 question: Welcome
@@ -27,4 +30,79 @@ buttons:
  - "Get started": continue
  - "Exit": exit
    url: https://www.gov.je/Government/NonexecLegal/StatesGreffe/Pages/LegislativeDraftingOffice.aspx
+---
+# initial details screen
+mandatory: True
+question: General information about the proposed Order
+fields:
+  - Instructing Officer Name: FeesIOName
+  - Email: FeesContactEmail
+  - Minister who will sign the Order: FeesSigningMinister
+    hint: select from the list
+    choices:
+    # this can be a data file later
+    - Chief Minister
+    - Minister for Children and Education
+    - Minister for Economic Development, Tourism, Sport and Culture
+    - Minister for the Environment
+    - Minister for External Relations and Financial Services
+    - Minister for Health and Social Services
+    - Minister for Home Affairs
+    - Minister for Housing and Communities
+    - Minister for Infrastructure
+    - Minister for International Development
+    - Minister for Social Security
+    - Minister for Treasury and Resources
+    - Other
+  - Type who will sign: FeesSigningMinister
+    show if:
+      variable: FeesSigningMinister
+      is: 'Other'
+  - Proposed commencement date: FeesCommencement
+---
+# possible single instrument details screen - would need looping later
+question: Details of Order to be amended
+fields:
+  - Select instrument to be amended: FeesTargetOrder
+    hint: select from the list
+    choices:
+    # this can be a data file later
+    - Sample Order 1
+    - Sample Order 2
+    - Sample Order 3
+    - Other
+  - Type the full instrument citation: FeesTargetOrder
+    show if:
+      variable: FeesTargetOrder
+      is: 'Other'
+---
+mandatory: True
+code: |
+  provision.appendObject()
+---
+question: |
+  Provisions to be amended
+fields:
+  - Provision to be amended: provision[i].name.text
+  - Fee to be deleted: provision[i].feenow
+  - Fee to be inserted: provision[i].feelater
+list collect: True
+---
+mandatory: True
+question: |
+  Summary for ${ FeesTargetOrder }
+subquestion: |
+  ${ provision.table }
+  
+  ${ provision.add_action() }
+---
+table: provision.table
+rows: provision
+columns:
+  - Provision: row_item.name
+  - Fee to be deleted: row_item.feenow
+  - Fee to be inserted: row_item.feelater
+edit:
+  - name.text
+allow reordering: True
 ---
