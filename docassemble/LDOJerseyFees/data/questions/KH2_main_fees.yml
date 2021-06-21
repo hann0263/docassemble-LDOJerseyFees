@@ -1,0 +1,172 @@
+---
+objects:
+  FeesTargetOrder: DAList.using(object_type=Thing, there_are_any=True, minimum_number=1, complete_attribute='complete')
+  FeesTargetOrder[i].provision: DAList.using(object_type=Thing, there_are_any=True, minimum_number=1, complete_attribute='complete')
+---
+code: |
+  FeesTargetOrder[i].title
+  FeesTargetOrder[i].enablinglaw
+  FeesTargetOrder[i].enablingprovisions
+  FeesTargetOrder[i].provision.gather()
+  FeesTargetOrder[i].complete = True
+---
+code: |
+  FeesTargetOrder[i].provision[j].name
+  FeesTargetOrder[i].provision[j].feenow
+  FeesTargetOrder[i].provision[j].feelater
+  FeesTargetOrder[i].provision[j].feereason
+  FeesTargetOrder[i].provision[j].complete = True
+---
+question: What is the title of the ${ ordinal(i) } Order to be amended?  
+fields:
+  - Select instrument to be amended: FeesTargetOrder[i].title
+    hint: select from the list
+    choices:
+    - Sample Order 1
+    - Sample Order 2
+    - Sample Order 3
+    - Other
+  - Type the full instrument citation: FeesTargetOrder[i].title
+    show if:
+      variable: FeesTargetOrder[i].title
+      is: 'Other'
+  - Select the parent Law: FeesTargetOrder[i].enablinglaw
+    hint: select from the list
+    choices:
+    - Parent Law 1
+    - Parent Law 2
+    - Parent Law 3
+    - Other
+  - Type the full parent Law title: FeesTargetOrder[i].enablinglaw
+    show if:
+      variable: FeesTargetOrder[i].enablinglaw
+      is: 'Other'
+  - Type the provision/s the Order is made under: FeesTargetOrder[i].enablingprovisions
+    hint: e.g. Articles 4(3) and 6
+---
+question: |
+  Do you want to amend another Order?
+yesno: FeesTargetOrder.there_is_another
+---
+# mandatory: True
+# code: |
+#   FeesTargetOrder[i].provision.appendObject()
+# ---
+question: Provisions to be amended for ${ FeesTargetOrder[i].title }
+fields:
+  - Provision to be amended: FeesTargetOrder[i].provision[j].name.text
+    hint: e.g. Article 5(4)(b)
+  - Fee to be deleted: FeesTargetOrder[i].provision[j].feenow
+    hint: e.g. £54.30
+  - Fee to be inserted: FeesTargetOrder[i].provision[j].feelater
+    hint: e.g. £55.70
+  - Reason for fee change: FeesTargetOrder[i].provision[j].feereason
+    hint: select option
+    choices:
+      - 2% standard cost recovery increase
+      - Other
+  - Other: FeesTargetOrder[i].provision[j].feereasonother
+    hint: give very brief reason for non-standard increase
+    show if:
+      variable: FeesTargetOrder[i].provision[j].feereason
+      is: 'Other'
+
+list collect: True
+---
+# welcome screen
+mandatory: True
+question: Welcome
+subquestion: |
+  This tool will help you to prepare instructions for Orders that amend fees.
+  
+  You **should** use this tool if:
+  
+  *  You are preparing instructions to change the amount of an existing fee (or fees); and
+  *  The fee can be amended by Order.
+  
+  You **should not** use this tool if:
+  
+  *  You are creating a new fee regime; or
+  *  The fee you wish to change cannot be amended by Order (because, for example, it needs to be done by Regulations or an amendment Law).
+  
+  Before starting, you will need to know:
+  
+  * The legislation that sets the fee you wish to amend;
+  * The legislation that allows the fee to be set or amended;
+  * The current amount of the fee;
+  * The new amount of the fee; and
+  * The reason for the change.
+  
+buttons:
+ - "Get started": continue
+ - "Exit": exit
+   url: https://www.gov.je/Government/NonexecLegal/StatesGreffe/Pages/LegislativeDraftingOffice.aspx
+---
+# initial details screen
+question: General information about the proposed Order
+fields:
+  - Instructing Officer Name: FeesIOName
+  - Email: FeesContactEmail
+  - Minister who will sign the Order: FeesSigningMinister
+    hint: select from the list
+    choices:
+    # this can be a data file later
+    - Chief Minister
+    - Minister for Children and Education
+    - Minister for Economic Development, Tourism, Sport and Culture
+    - Minister for the Environment
+    - Minister for External Relations and Financial Services
+    - Minister for Health and Social Services
+    - Minister for Home Affairs
+    - Minister for Housing and Communities
+    - Minister for Infrastructure
+    - Minister for International Development
+    - Minister for Social Security
+    - Minister for Treasury and Resources
+    - Other
+  - Type who will sign: FeesSigningMinister
+    show if:
+      variable: FeesSigningMinister
+      is: 'Other'
+  - Proposed commencement date: FeesCommencement
+---
+mandatory: True
+question: |
+  Instructions for the Legislative Drafting Office
+subquestion: |
+  At the end of this page there is a link to download a Word document containing all the amendment details.
+  
+  **Instructing Officer Name**: ${ FeesIOName }
+
+  **Email**: ${ FeesContactEmail }
+  
+  **Minister who will sign the Order**: ${ FeesSigningMinister }
+  
+  **Proposed commencement date**: ${ FeesCommencement }
+  
+  ${ FeesTargetOrder }
+  
+attachment:
+  docx template file: Instructions_template.docx
+  valid formats:
+    - docx
+buttons:
+  - Exit: exit
+    url: https://www.gov.je/Government/NonexecLegal/StatesGreffe/Pages/LegislativeDraftingOffice.aspx
+  - Restart: restart
+---
+table: provision.table
+rows: FeesTargetOrder[i].provision
+columns:
+  - Provision: |
+      row_item.FeesTargetOrder[i].provision[j].name
+  - Fee to be deleted: |
+      row_item.FeesTargetOrder[i].provision[j].feenow
+  - Fee to be inserted: |
+      row_item.FeesTargetOrder[i].provision[j].feelater
+  - Reason for fee change: |
+      row_item.FeesTargetOrder[i].provision[j].feereasonother if row_item.FeesTargetOrder[i].provision[j].feereason == 'Other' else row_item.FeesTargetOrder[i].provision[j].feereason
+edit:
+  - name.text
+allow reordering: True
+---
