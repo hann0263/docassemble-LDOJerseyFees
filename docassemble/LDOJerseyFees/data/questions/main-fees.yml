@@ -1,17 +1,41 @@
+mandatory: True
+code: |
+  set_parts(logo='<img src="' + ldologo.url_for() + '" style="height: 50px;">')
+---
+features:
+  css: fees.css
+  debug: True
+  hide standard menu: False
 ---
 include:
-  - data-ministers.yml
+  - fees_data_ministers.yml
+  - fees_data_orders.yml
+  - fees_data_laws.yml
 ---
 objects:
-  - FeesMinisterList: DAList.using(there_are_any=True, auto_gather=False)
-objects from file:
-  - FeesMinisterList: data-ministers.yml
+  FeesTargetOrder: DAList.using(object_type=Thing, there_are_any=True, minimum_number=1, complete_attribute='complete')
+  FeesTargetOrder[i].provision: DAList.using(object_type=Thing, there_are_any=True, minimum_number=1, complete_attribute='complete')
+  ldologo: DAStaticFile.using(filename='LDO_Logo.png')
+---
+code: |
+  FeesTargetOrder[i].title
+  FeesTargetOrder[i].enablinglaw
+  FeesTargetOrder[i].enablingprovisions
+  FeesTargetOrder[i].provision.gather()
+  FeesTargetOrder[i].complete = True
+---
+code: |
+  FeesTargetOrder[i].provision[j].name
+  FeesTargetOrder[i].provision[j].feenow
+  FeesTargetOrder[i].provision[j].feelater
+  FeesTargetOrder[i].provision[j].feereason
+  FeesTargetOrder[i].provision[j].complete = True
 ---
 # welcome screen
 mandatory: True
-question: Welcome
+question: Instructions for Fees Orders - Welcome
 subquestion: |
-  This tool will help you to prepare instructions for Orders that amend fees.
+  This application will help you to prepare instructions for Orders that amend fees.
   
   You **should** use this tool if:
   
@@ -37,26 +61,158 @@ buttons:
    url: https://www.gov.je/Government/NonexecLegal/StatesGreffe/Pages/LegislativeDraftingOffice.aspx
 ---
 # initial details screen
-mandatory: True
-question: Contact details
+question: General information about the proposed Order
 fields:
-  - Name (Instructing Officer): FeesIOName
+  - Instructing Officer Name: FeesIOName
   - Email: FeesContactEmail
+    datatype: email
   - Minister who will sign the Order: FeesSigningMinister
     hint: select from the list
-    # choices: FeesMinisterList
-    # this can be a data file later
-    #   - Minister for X
-    #   - Minister for y
-    #   - Minister for z
-    #   - Minister for hippopotamuses
-    #   - Other
-    code: |
-      FeesMinisterList()
-  - Type who will sign: FeesMinister
+    datatype: dropdown
+    code: MinisterTitles
+  - Type who will sign: FeesSigningMinister
     show if:
       variable: FeesSigningMinister
       is: 'Other'
   - Proposed commencement date: FeesCommencement
+  - Date by which Order must be signed: FeesSignedDate
+    help: The Order should be signed at least 7 days before its stated commencement (if that commencement is a fixed date). Make sure you allow for the availability of the Minister and public holidays when planning signature times.
+---
+question: What is the title of the ${ ordinal(i) } Order to be amended?  
+fields:
+  - Select instrument to be amended: FeesTargetOrder[i].title
+    hint: select from the list
+    datatype: dropdown
+    code: OrderTitles
+  - Type the full instrument citation: FeesTargetOrder[i].title
+    show if:
+      variable: FeesTargetOrder[i].title
+      is: 'Other'
+  - Select the parent legislation: FeesTargetOrder[i].enablinglaw
+    help: This is the Law or Regulations that allow the Order to be made. If your parent legislation is not on the list, or if you have more than one parent law, please select **Other** and provide details when prompted.
+    hint: select from the list
+    datatype: dropdown
+    code: LawTitles
+  - Type the full title of the parent legislation: FeesTargetOrder[i].enablinglaw
+    show if:
+      variable: FeesTargetOrder[i].enablinglaw
+      is: 'Other'
+  - Type the provision/s of the parent legislation the Order is made under: FeesTargetOrder[i].enablingprovisions
+    hint: e.g. Articles 4(3) and 6
+---
+question: |
+  Do you want to amend another Order?
+yesno: FeesTargetOrder.there_is_another
+---
+question: Provisions to be amended for **${ FeesTargetOrder[i].title }**
+fields:
+  - Provision to be amended: FeesTargetOrder[i].provision[j].name.text
+    hint: e.g. Article 5(4)(b)
+  - Fee to be deleted: FeesTargetOrder[i].provision[j].feenow
+    help: Only include ONE number or value. If you need to include more than one number, include that in the Word file provided when you finish this app.
+    hint: e.g. £54.30
+  - Fee to be inserted: FeesTargetOrder[i].provision[j].feelater
+    help: Only include ONE number or value. If you need to include more than one number, include that in the Word file provided when you finish this app.
+    hint: e.g. £55.70
+  - Reason for fee change: FeesTargetOrder[i].provision[j].feereason
+    hint: select option
+    choices:
+      - standard inflation increase
+      - Other
+  - Other: FeesTargetOrder[i].provision[j].feereasonother
+    hint: give very brief reason for non-standard increase
+    show if:
+      variable: FeesTargetOrder[i].provision[j].feereason
+      is: 'Other'
 
+list collect:
+  enable: True
+  add another label: Amend another provision
+  
+continue button label: Finish this Order
+
+---
+mandatory: True
+question: |
+  Instructions for the Legislative Drafting Office
+subquestion: |
+  At the end of this page there is a link to download a Word document containing all the amendment details.
+  
+  # Amending Order details
+  
+  **Instructing Officer Name**: ${ FeesIOName }
+
+  **Email**: ${ FeesContactEmail }
+  
+  **Minister who will sign the Order**: ${ FeesSigningMinister }
+  
+  **Proposed commencement date**: ${ FeesCommencement }
+  
+  **Last date for signature**: ${ FeesSignedDate }
+  
+  % for an_order in FeesTargetOrder:
+  ### ${ an_order.title }
+  
+  **Enabling provisions (vires):** ${ an_order.enablingprovisions } of the ${ an_order.enablinglaw }
+
+  **Provisions**
+
+  ${ an_order.provision_table }
+  % endfor 
+
+attachment:
+  docx template file: Instructions_template.docx
+  valid formats:
+    - docx
+
+buttons:
+  - Exit: exit
+    url: https://www.gov.je/Government/NonexecLegal/StatesGreffe/Pages/LegislativeDraftingOffice.aspx
+  - Restart: restart
+---
+code: |
+  if FeesTargetOrder[i].provision[j].feereason == 'Other':
+    FeesTargetOrder[i].provision[j].display_fee_reason = FeesTargetOrder[i].provision[j].feereasonother
+  else:
+    FeesTargetOrder[i].provision[j].display_fee_reason = FeesTargetOrder[i].provision[j].feereason
+---
+table: FeesTargetOrder[i].provision_table
+rows: FeesTargetOrder[i].provision
+columns:
+  - Provision: |
+      row_item.name
+  - Fee to be deleted: |
+      row_item.feenow
+  - Fee to be inserted: |
+      row_item.feelater
+  - Reason for fee change: |
+      row_item.display_fee_reason
+# include this option if change can be taken through to template
+# edit:
+  #- name.text
+# change allow reordering to True if changed order can be taken through to template
+allow reordering: False
+---
+code: |
+  FeesTargetOrder[i].provision[j].feenow_number = re.sub(r'[^0-9\.]*', '', FeesTargetOrder[i].provision[j].feenow)
+  if len(FeesTargetOrder[i].provision[j].feenow_number) == 0:
+    FeesTargetOrder[i].provision[j].feenow_number = "no number"
+  else:
+    FeesTargetOrder[i].provision[j].feenow_number = float(FeesTargetOrder[i].provision[j].feenow_number)
+---
+code: |
+  FeesTargetOrder[i].provision[j].feelater_number = re.sub(r'[^0-9\.]*', '', FeesTargetOrder[i].provision[j].feelater)
+  if len(FeesTargetOrder[i].provision[j].feelater_number) == 0:
+    FeesTargetOrder[i].provision[j].feelater_number = "no number"
+  else:
+    FeesTargetOrder[i].provision[j].feelater_number = float(FeesTargetOrder[i].provision[j].feelater_number)
+---
+code: |
+  if FeesTargetOrder[i].provision[j].feenow_number == "no number":
+    FeesTargetOrder[i].provision[j].difference = "calculation not possible"
+  elif FeesTargetOrder[i].provision[j].feelater_number == "no number":
+    FeesTargetOrder[i].provision[j].difference = "calculation not possible"
+  else:
+    FeesTargetOrder[i].provision[j].difference = (FeesTargetOrder[i].provision[j].feelater_number - FeesTargetOrder[i].provision[j].feenow_number)/FeesTargetOrder[i].provision[j].feenow_number*100
+    FeesTargetOrder[i].provision[j].difference = round(FeesTargetOrder[i].provision[j].difference, 1)
 ---

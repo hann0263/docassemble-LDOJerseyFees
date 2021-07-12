@@ -1,6 +1,6 @@
 # docassemble.LDOJerseyFees
 
-An application for drafting fees
+An application for drafting fees. It is a prototype version for demonstrating to the client and submitting for the Coding the Law course.
 
 ## Author
 
